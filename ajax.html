@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang='en-us'>
+<head>
+<title>:: TEST ::</title>
+<meta charset='utf-8'>
+<style>
+#box {
+  border: 1px dashed black;
+  background-color: yellow;
+  width:3em;
+  height: 3em;
+  box-shadow: 10px 10px 10px #eee;
+  position: absolute;
+  top: 300px;
+  left: 100px;
+}
+
+@-webkit-keyframes pulse {
+  0% {
+      width: 3em;
+  }
+  50% {
+    width: 5em;
+  }
+  100% {
+    width: 20em;
+  }
+}
+#box:hover {
+  -webkit-animation-name: pulse;
+  -webkit-animation-duration: 1s;
+  -webkit-animation-iteration-count: 4;
+  -webkit-animation-direction: alternate;
+  -webkit-animation-timing-funciton: ease-in-out;
+}
+
+.bg-ubuntu {
+  width: 500px;
+  height: 320px;
+}
+</style>
+<script>
+"use strict";
+(function(){
+  // Debug
+  var DEBUG = {
+    mode : "product", // product | debug
+    start : 0,
+    end : 0,
+    getChkTime : function () {
+      return (Date.now) ? Date.now() : new Date().getTime();
+    },
+    getLoadTime : function() {
+      return this.end - this.start; 
+    },
+    log: function (msg) {
+      if(this.mode === "debug") {
+        console.log(msg);
+      }
+    }
+  };
+  DEBUG.mode = 'debug';
+  DEBUG.start = DEBUG.getChkTime();
+
+  // namespace
+  var MYAPP = {
+    domready: function(callback) {
+      DEBUG.log('[started]');
+      var isReady = false,
+      document = window.document,
+      DomReady = function () {
+        if(!document.body) {
+          setTimeout(DomReady, 1);
+          return;
+        }
+        if(typeof callback === "function") {
+          callback();  
+        }
+        
+      },
+      chkDoScroll = function () {
+        if(isReady) {
+          return;
+        }
+        try {
+          document.documentElement.doScroll('left');
+        }
+        catch(e) {
+          setTimeout(chkDoScroll, 1);
+          return;
+        }
+        DomReady();
+      },
+      DOMContentLoaded = function() {
+        var ieNoFrame;
+        if(isReady) {
+          DEBUG.log("[Info] The page already loaded!!!");
+          DEBUG.end = DEBUG.getChkTime();
+          DEBUG.log("[Event : load] Loading time : " + DEBUG.getLoadTime() + "ms");      
+          return;
+        }
+        if(document.removeEventListener) {
+          document.removeEventListener('DOMContentLoaded', DOMContentLoaded, false);
+          document.removeEventListener('load', DOMContentLoaded, false);
+        }
+        else if(document.detacheEvent) {
+          document.detacheEvent('onreadystatechange', DOMContentLoaded);
+          window.detacheEvent('onload', DOMContentLoaded);
+        }
+        isReady = true;
+        DomReady();
+      };
+
+      if(document.readyState !== "loading") {
+        DomReady();
+      }
+      else {
+        if(document.addEventListener) {
+          document.addEventListener('DOMContentLoaded', DOMContentLoaded, false);
+          window.addEventListener('load', DOMContentLoaded, false);
+        }
+        else if(document.attachEvent){
+          document.attachEvent('onreadystatechange', DOMContentLoaded);
+          window.attacheEvent('onload', DOMContentLoaded);
+
+          // doScroll checking for old IE
+          try {
+            ieNoFrame = window.frameElement == null;  
+          }
+          catch(e) {}
+          if(document.documentElement.doScroll && isNoFrame) {
+            chkDoScroll();
+          }
+        }
+      }
+    },
+    xhrRequest: function (method, url, callback) {
+      
+      var xhr, i, len, ids;
+      if(XMLHttpRequest) {
+        xhr = new XMLHttpRequest();
+      }
+      else {
+          axIds = ['MSXML2.XMLHTTP.3.0',
+                  'MSXML2.XMLHTTP',
+                  'Microsoft.XMLHTTP'];
+
+          len = axIds.length;
+          for(i=0; i<len; i++) {
+            try {
+              xhr = new ActiveXObject(ids[i]);
+              break;
+            } catch (e) {}
+          }
+      }
+
+      xhr.onreadystatechange = (function (req) {
+        return function () {
+          if (xhr.readyState === 4 && xhr.status === 200) { // DONE
+            callback(req);
+          }
+        };
+        
+      })(xhr);
+
+      if(method === "") {
+        method = "GET";
+      } 
+      xhr.open(method, url, true);
+      return xhr;
+    }
+  };
+
+  // domready check
+  MYAPP.domready(function() {
+    DEBUG.log('DOM Ready!!!') 
+    DEBUG.end = DEBUG.getChkTime();
+    DEBUG.log("[Event : DOMContentLoaded] Loading time : " + DEBUG.getLoadTime() + "ms");
+    fetchNews();
+  });
+
+  //  global library
+  var $ = function(qry) {
+    var arrNode = document.querySelectorAll(qry);
+    return (arrNode.length === 1) ? arrNode[0] : arrNode;
+  };
+
+  Element.prototype.getHTML = function () {
+        return this.innerHTML;
+  };
+
+  Element.prototype.setHTML = function (html) {
+        this.innerHTML = html;
+  };
+
+  // Show google news in the news box
+  function fetchNews() {
+    // get news articles from an ajax call 
+    var xhr = MYAPP.xhrRequest("GET", "api.php", function(req) {
+      var json = JSON.parse(req.responseText),
+      entries = json.responseData.feed.entries,
+      divNews = $('#news'), idx, title, link;
+
+      for(idx in entries) {
+        title = document.createTextNode(entries[idx].title);
+        link = document.createElement("a");
+        link.setAttribute('href', entries[idx].link);
+        link.appendChild(title);
+        divNews.appendChild(link);
+        divNews.appendChild(document.createElement("br"));
+
+      }
+    });
+    xhr.send(null);
+  }
+})();
+</script>
+</head>
+<body>
+<div id="news"></div>
+<div id="box"></div>
+<img src="http://static.desktopnexus.com/owallpaper/1213505-1680x1050-wallpaper-1946599.jpg?st=ejVaBRw2jbJ_pRPrZw2-cA&e=1381535101" class='bg-ubuntu'/>
+
+<script>
+</script>
+</body>
+</html>
