@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang='en-us'>
+<head>
+<title>:: TEST ::</title>
+<meta charset='utf-8'>
+<style>
+#box {
+  border: 1px dashed black;
+  background-color: yellow;
+  width:3em;
+  height: 3em;
+  box-shadow: 10px 10px 10px #eee;
+  position: absolute;
+  top: 100px;
+  left: 100px;
+}
+
+@-webkit-keyframes pulse {
+  0% {
+      width: 3em;
+  }
+  50% {
+    width: 5em;
+  }
+  100% {
+    width: 20em;
+  }
+}
+#box:hover {
+  -webkit-animation-name: pulse;
+  -webkit-animation-duration: 1s;
+  -webkit-animation-iteration-count: 4;
+  -webkit-animation-direction: alternate;
+  -webkit-animation-timing-funciton: ease-in-out;
+}
+
+.bg-ubuntu {
+  width: 500px;
+  height: 320px;
+}
+</style>
+<script>
+// Debug
+DEBUG = {
+  mode : "product", // product | debug
+  start : 0,
+  end : 0,
+  getChkTime : function () {
+    return (Date.now) ? Date.now() : new Date().getTime();
+  },
+  getLoadTime : function() {
+    return this.end - this.start; 
+  },
+  log: function (msg) {
+    if(this.mode === "debug") {
+      console.log(msg);
+    }
+  }
+};
+DEBUG.mode = 'debug';
+DEBUG.start = DEBUG.getChkTime();
+
+// namespace
+MYAPP = {
+  domready: function(callback) {
+    DEBUG.log('[started]');
+    var isReady = false,
+    document = window.document,
+    DomReady = function () {
+      if(!document.body) {
+        setTimeout(DomReady, 1);
+        return;
+      }
+      if(typeof callback === "function") {
+        callback();  
+      }
+      
+    },
+    chkDoScroll = function () {
+      if(isReady) {
+        return;
+      }
+      try {
+        document.documentElement.doScroll('left');
+      }
+      catch(e) {
+        setTimeout(chkDoScroll, 1);
+        return;
+      }
+      DomReady();
+    },
+    DOMContentLoaded = function() {
+      var ieNoFrame;
+      if(isReady) {
+        DEBUG.log("[Info] The page already loaded!!!");
+        DEBUG.end = DEBUG.getChkTime();
+        DEBUG.log("[Event : load] Loading time : " + DEBUG.getLoadTime() + "ms");      
+        return;
+      }
+      if(document.removeEventListener) {
+        document.removeEventListener('DOMContentLoaded', DOMContentLoaded, false);
+        document.removeEventListener('load', DOMContentLoaded, false);
+      }
+      else if(document.detacheEvent) {
+        document.detacheEvent('onreadystatechange', DOMContentLoaded);
+        window.detacheEvent('onload', DOMContentLoaded);
+      }
+      isReady = true;
+      DomReady();
+    };
+
+    if(document.readyState !== "loading") {
+      DomReady();
+    }
+    else {
+      if(document.addEventListener) {
+        document.addEventListener('DOMContentLoaded', DOMContentLoaded, false);
+        window.addEventListener('load', DOMContentLoaded, false);
+      }
+      else if(document.attachEvent){
+        document.attachEvent('onreadystatechange', DOMContentLoaded);
+        window.attacheEvent('onload', DOMContentLoaded);
+
+        // doScroll checking for old IE
+        try {
+          ieNoFrame = window.frameElement == null;  
+        }
+        catch(e) {}
+        if(document.documentElement.doScroll && isNoFrame) {
+          chkDoScroll();
+        }
+      }
+    }
+  }
+};
+// domready check
+MYAPP.domready(function() {
+  DEBUG.log('DOM Ready!!!') 
+  DEBUG.end = DEBUG.getChkTime();
+  DEBUG.log("[Event : DOMContentLoaded] Loading time : " + DEBUG.getLoadTime() + "ms");
+})
+
+
+</script>
+</head>
+<body>
+
+<div id="box"></div>
+<img src="http://static.desktopnexus.com/owallpaper/1213505-1680x1050-wallpaper-1946599.jpg?st=ejVaBRw2jbJ_pRPrZw2-cA&e=1381535101" class='bg-ubuntu'/>
+
+<script>
+</script>
+</body>
+</html>
