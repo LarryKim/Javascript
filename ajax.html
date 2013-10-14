@@ -180,7 +180,7 @@
   });
 
   //  global library
-  var $ = function(qry) {
+  function $ (qry) {
     var arrNode = document.querySelectorAll(qry);
     return (arrNode.length === 1) ? arrNode[0] : arrNode;
   };
